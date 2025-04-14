@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class SupabaseService
 {
@@ -39,8 +40,15 @@ class SupabaseService
                 ->withHeaders(['Authorization' => "Bearer {$token}"])
                 ->get('/user');
 
-            return $response->successful() ? $response->json() : null;
+            if ($response->successful()) {
+                Log::info('Supabase authentication successful', ['user' => $response->json()]);
+                return $response->json();
+            } else {
+                Log::warning('Supabase authentication failed', ['status' => $response->status(), 'response' => $response->body()]);
+                return null;
+            }
         } catch (\Exception $e) {
+            Log::error('Supabase authentication exception', ['message' => $e->getMessage()]);
             return null;
         }
     }
@@ -57,6 +65,7 @@ class SupabaseService
 
             return $response->successful() ? $response->json()[0] ?? null : null;
         } catch (\Exception $e) {
+            Log::error('Error fetching user by email', ['email' => $email, 'error' => $e->getMessage()]);
             return null;
         }
     }
@@ -82,9 +91,14 @@ class SupabaseService
 
     public function broadcastToRoom($roomCode, $event, $payload)
     {
-        // In a real implementation, this would use the Supabase Realtime client
-        // For this example, we're just logging the event
-        \Log::info("Broadcasting to room {$roomCode}: {$event}", $payload);
-        return true;
+        try {
+            // In a real implementation, this would use the Supabase Realtime client
+            // For this example, we're just logging the event
+            Log::info("Broadcasting to room {$roomCode}: {$event}", $payload);
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Error broadcasting to room {$roomCode}", ['event' => $event, 'error' => $e->getMessage()]);
+            return false;
+        }
     }
 }

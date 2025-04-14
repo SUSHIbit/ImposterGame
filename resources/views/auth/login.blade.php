@@ -1,4 +1,3 @@
-
 <!-- resources/views/auth/login.blade.php -->
 @extends('layouts.app')
 
@@ -36,7 +35,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         const supabaseUrl = '{{ config('supabase.url') }}';
         const supabaseKey = '{{ config('supabase.key') }}';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Initialize Supabase client correctly
+        const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
         
         const loginForm = document.getElementById('login-form');
         const authContent = document.getElementById('auth-content');
@@ -57,10 +58,14 @@
                 
                 if (error) throw error;
                 
-                const { access_token } = data.session;
-                
-                // Redirect to callback route with token
-                window.location.href = "{{ route('auth.callback') }}?access_token=" + access_token;
+                if (data && data.session) {
+                    const { access_token } = data.session;
+                    
+                    // Redirect to callback route with token
+                    window.location.href = "{{ route('auth.callback') }}?access_token=" + access_token;
+                } else {
+                    throw new Error('Login failed. No session returned.');
+                }
             } catch (error) {
                 authContent.innerHTML = `
                     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">

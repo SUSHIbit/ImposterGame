@@ -7,7 +7,9 @@
     <p class="text-lg text-gray-600 mb-8">Can you find the imposter or blend in undetected?</p>
     
     <div class="max-w-lg mx-auto">
-        <img src="https://via.placeholder.com/800x400?text=Imposter+Game" alt="Imposter Game" class="rounded-lg shadow-xl mb-8 w-full">
+        <div class="bg-indigo-100 p-8 rounded-lg shadow-lg mb-8 flex items-center justify-center">
+            <h2 class="text-3xl font-bold text-indigo-800">Imposter Game</h2>
+        </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="bg-white p-6 rounded-lg shadow-md">

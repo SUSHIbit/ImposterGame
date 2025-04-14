@@ -40,12 +40,13 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const supabaseUrl = '{{ config('supabase.url') }}';
         const supabaseKey = '{{ config('supabase.key') }}';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // Create Supabase client properly
+        const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
         
         const registerForm = document.getElementById('register-form');
         const authContent = document.getElementById('auth-content');
@@ -78,10 +79,22 @@
                 
                 if (error) throw error;
                 
-                const { access_token } = data.session;
-                
-                // Redirect to callback route with token
-                window.location.href = "{{ route('auth.callback') }}?access_token=" + access_token;
+                if (data && data.session) {
+                    const { access_token } = data.session;
+                    
+                    // Redirect to callback route with token
+                    window.location.href = "{{ route('auth.callback') }}?access_token=" + access_token;
+                } else {
+                    // Show confirmation message if email confirmation is required
+                    authContent.innerHTML = `
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                            <p>Registration successful! Please check your email to confirm your account.</p>
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="{{ route('login') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-500">Go to Login</a>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 authContent.innerHTML = `
                     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">

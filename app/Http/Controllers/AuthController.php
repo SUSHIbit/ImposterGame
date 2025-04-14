@@ -32,31 +32,37 @@ class AuthController extends Controller
         $token = $request->input('access_token');
         
         if (!$token) {
-            return redirect()->route('login')->with('error', 'Authentication failed.');
+            return redirect()->route('login')->with('error', 'Authentication failed. No token provided.');
         }
         
-        $supabaseUser = $this->supabaseService->verifyToken($token);
-        
-        if (!$supabaseUser) {
-            return redirect()->route('login')->with('error', 'Invalid token.');
+        try {
+            $supabaseUser = $this->supabaseService->verifyToken($token);
+            
+            if (!$supabaseUser) {
+                return redirect()->route('login')->with('error', 'Invalid token or authentication failed.');
+            }
+            
+            // Find or create user
+            $user = User::firstOrCreate(
+                ['supabase_id' => $supabaseUser['id']],
+                [
+                    'email' => $supabaseUser['email'],
+                    'name' => $supabaseUser['user_metadata']['name'] ?? explode('@', $supabaseUser['email'])[0],
+                    'role' => 'user',
+                ]
+            );
+            
+            Auth::login($user);
+            
+            // Store token in cookie - secure and HTTP only
+            $cookie = Cookie::make('supabase_token', $token, 60 * 24, null, null, true, true);
+            
+            return redirect()->route('home')->withCookie($cookie);
+            
+        } catch (\Exception $e) {
+            \Log::error('Authentication error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Authentication error: ' . $e->getMessage());
         }
-        
-        // Find or create user
-        $user = User::firstOrCreate(
-            ['supabase_id' => $supabaseUser['id']],
-            [
-                'email' => $supabaseUser['email'],
-                'name' => $supabaseUser['user_metadata']['name'] ?? explode('@', $supabaseUser['email'])[0],
-                'role' => 'user',
-            ]
-        );
-        
-        Auth::login($user);
-        
-        // Store token in cookie
-        $cookie = Cookie::make('supabase_token', $token, 60 * 24, null, null, true, true);
-        
-        return redirect()->route('home')->withCookie($cookie);
     }
     
     public function logout(Request $request)
